@@ -7,11 +7,10 @@ const generateToken = (id) => {
 };
 
 const registerUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
-
   try {
-    const userExists = await User.findOne({ email });
+    const { name, email, password, role } = req.body;
 
+    const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -20,10 +19,10 @@ const registerUser = async (req, res) => {
       name,
       email,
       password,
-      role
+      role: role || 'student'
     });
 
-    if (role === 'student') {
+    if (role === 'student' || !role) {
       await Student.create({
         user: user._id,
         name,
@@ -45,9 +44,13 @@ const registerUser = async (req, res) => {
 };
 
 const authUser = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
